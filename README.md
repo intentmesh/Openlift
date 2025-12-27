@@ -1,26 +1,26 @@
 # 🚀 OpenLift: The Open Vertical Transportation Platform
 
-> Vendor-neutral safety core + intelligent app layer = the "Android of elevators" for the modernization era.
+> Vendor-neutral safety core + intelligent app layer = the open standard for the modernization era.
 
 [Vision](#vision) · [Why Now](#why-now) · [Stack](#stack-overview) · [Hardware](#hardware-reference-blueprint) · [Intelligence](#intelligence-layer) · [Roadmap](#roadmap) · [Contribute](#how-to-get-involved)
 
 ---
 
 ## 📊 Status at a Glance
-| Track | Today | Next Up |
+| Track | Maturity | Next Up |
 | --- | --- | --- |
-| Vision & Governance | README + roadmap | Formalize OpenLift Forum charter |
-| Tooling | Pollsheet, early diagnostics concepts | OpenVibe + SpecScanner PoC |
-| Simulator | Python digital twin (in repo) | Real-time CAN mock + HIL hooks |
-| Core Controller | C++/Rust split-kernel scaffolding | Zephyr safety subset + CANopenNode port |
-| Safety Path | Research & requirements capture | IEC 61508 SIL 3 plan + ISO 22201 checklist |
+| Vision & Governance | Concept | Formalize OpenLift Forum charter |
+| Tooling | Prototype | OpenVibe + SpecScanner PoC |
+| Simulator | Prototype | Real-time CAN mock + HIL hooks |
+| Core Controller | Research | Zephyr safety subset + CANopenNode port |
+| Safety Path | Research | IEC 61508 SIL 3 plan + ISO 22201 checklist |
 
 *(Open source release will be phased; see [Licensing Plan](#licensing-plan).)*
 
 ---
 
 ## 🌍 Vision
-OpenLift breaks the OEM walled gardens by separating a certified, unhackable safety kernel from an extensible application/runtime layer. Independent service providers, component manufacturers, and building owners get the same freedom Android gave handset makers: buy the best hardware, run any compliant software, and keep long-term maintenance in their control.
+OpenLift breaks the OEM walled gardens by separating a safety-critical kernel from an extensible application/runtime layer. Independent service providers, component manufacturers, and building owners get the freedom to mix and match hardware, run any compliant software, and keep long-term maintenance in their control.
 
 ---
 
@@ -28,7 +28,7 @@ OpenLift breaks the OEM walled gardens by separating a certified, unhackable saf
 - **Modernization demand**: $20B market by 2030; building owners want "Right to Repair" and retrofit-friendly controllers.
 - **Standards convergence**: CANopen Lift (CiA 417) virtual devices + Zephyr's safety push remove the hardest interoperability barriers.
 - **AI-assisted development**: Modern LLMs can parse specs, generate protocol code, run simulations, and produce verification artifacts—compressing timelines for lean teams.
-- **Commodity hardware**: Dual-MCU boards (STM32H7 + ESP32-S3) with isolated CAN + FPGA co-processors deliver SIL-ready performance without OEM markup.
+- **Commodity hardware**: Dual-MCU boards (STM32H7 + ESP32-S3) with isolated CAN + FPGA co-processors offer a path to SIL readiness without OEM markup.
 
 ---
 
@@ -42,9 +42,9 @@ OpenLift breaks the OEM walled gardens by separating a certified, unhackable saf
 | L1 | Safety Core | Zephyr SIL subset · FPGA | Safety chain, overspeed, interlocks, watchdog arbitration |
 
 ### 🛡️ Safety/Application Split
-- Safety-critical logic ships as a sealed binary ("Safety Kernel") targeting IEC 61508 SIL 3 and ISO 22201 (PESSRAL).
-- Open APIs (`request_floor(5)`, `door_profile.set(...)`) enforce guardrails; watchdogs + redundant sensors fail safe.
-- Apps, drivers, and OTA updates live in the innovation layer; faults trigger a controlled stop without compromising the safety chain.
+- **Architecture Goal**: Isolate safety-critical logic in a sealed "Safety Kernel" designed to target IEC 61508 SIL 3 and ISO 22201 (PESSRAL).
+- Open APIs (`request_floor(5)`, `door_profile.set(...)`) enforce guardrails; watchdogs + redundant sensors are designed to fail safe.
+- Apps, drivers, and OTA updates live in the innovation layer; the architecture ensures faults trigger a controlled stop.
 
 ---
 
@@ -56,7 +56,7 @@ OpenLift breaks the OEM walled gardens by separating a certified, unhackable saf
    - Galvanically isolated transceivers (ISO1050 family) + digital isolators to survive car/machine room ground differentials.
    - TVS + gas discharge protection absorb lightning/motor transients; 24 V tolerant and maintenance-friendly.
 3. **CANopen Lift compliance**
-   - Implements virtual devices (Call Controller, Door Unit, Drive Unit) so third-party fixtures "just work."
+   - Targets virtual devices (Call Controller, Door Unit, Drive Unit) so third-party fixtures "just work."
    - CANopenNode + generated bindings provide ANSI C core with idiomatic C++/Python wrappers.
 
 ---
@@ -94,11 +94,7 @@ OpenLift breaks the OEM walled gardens by separating a certified, unhackable saf
 - `core-controller/` – split-kernel controller logic (C++/Rust).
 - `simulator/` – Python digital twin + traffic/kinematics models.
 - `dashboard/` – React/TS cloud dashboards and technician tooling.
-
-Upcoming docs (`/docs`):
-- `architecture.md` – deep dive into stack & interfaces.
-- `roadmap.md` – dated milestones + dependencies.
-- `compliance.md` – ASME A17.1, EN 81, ISO 22201 traceability matrix.
+- `docs/` – Architecture, compliance strategy, and detailed roadmap.
 
 ---
 
@@ -122,3 +118,6 @@ Source drops will occur progressively; nothing here obligates releasing sensitiv
 ---
 
 OpenLift exists to give technicians, ISPs, and component vendors the same freedom Android gave handset makers—an open, safety-first platform where innovation is decoupled from proprietary hardware. 🚧 Let's build the elevator ecosystem we always wished existed.
+
+---
+**Disclaimer:** OpenLift is currently a research and reference architecture project. The code provided is for experimental and educational purposes only. It is not certified for use in safety-critical lift applications. Always use certified, redundant safety chains and follow local regulations (ASME A17.1, EN 81) when working with vertical transportation equipment.
