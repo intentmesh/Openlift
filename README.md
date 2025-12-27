@@ -94,6 +94,7 @@ OpenLift breaks the OEM walled gardens by separating a safety-critical kernel fr
 - `core-controller/` – split-kernel controller logic (C++/Rust).
 - `simulator/` – Python digital twin + traffic/kinematics models.
 - `dashboard/` – React/TS cloud dashboards and technician tooling.
+- `tools/openvibe/` – ride-quality analyzer that turns accelerometer CSV logs into diagnostics.
 - `docs/` – Architecture, compliance strategy, and detailed roadmap.
 
 ---
