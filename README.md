@@ -1,8 +1,8 @@
 # 🚀 OpenLift: The Open Vertical Transportation Platform
 
-> Vendor-neutral safety core + intelligent app layer = the “Android of elevators” for the modernization era.
+> Vendor-neutral safety core + intelligent app layer = the "Android of elevators" for the modernization era.
 
-[Vision](#vision) · [Why Now](#why-now) · [Stack](#stack-overview) · [Agentic Dev](#agentic-engineering-with-google-antigravity) · [Hardware](#hardware-reference-blueprint) · [Intelligence](#intelligence-layer) · [Roadmap](#roadmap) · [Contribute](#how-to-get-involved)
+[Vision](#vision) · [Why Now](#why-now) · [Stack](#stack-overview) · [Hardware](#hardware-reference-blueprint) · [Intelligence](#intelligence-layer) · [Roadmap](#roadmap) · [Contribute](#how-to-get-involved)
 
 ---
 
@@ -25,9 +25,9 @@ OpenLift breaks the OEM walled gardens by separating a certified, unhackable saf
 ---
 
 ## ⚡ Why Now
-- **Modernization demand**: $20B market by 2030; building owners want “Right to Repair” and retrofit-friendly controllers.
-- **Standards convergence**: CANopen Lift (CiA 417) virtual devices + Zephyr’s safety push remove the hardest interoperability barriers.
-- **Agentic engineering**: Google Antigravity agents can parse specs, generate code, run QEMU simulations, and produce verification artifacts—compressing timelines for lean teams.
+- **Modernization demand**: $20B market by 2030; building owners want "Right to Repair" and retrofit-friendly controllers.
+- **Standards convergence**: CANopen Lift (CiA 417) virtual devices + Zephyr's safety push remove the hardest interoperability barriers.
+- **AI-assisted development**: Modern LLMs can parse specs, generate protocol code, run simulations, and produce verification artifacts—compressing timelines for lean teams.
 - **Commodity hardware**: Dual-MCU boards (STM32H7 + ESP32-S3) with isolated CAN + FPGA co-processors deliver SIL-ready performance without OEM markup.
 
 ---
@@ -36,23 +36,15 @@ OpenLift breaks the OEM walled gardens by separating a certified, unhackable saf
 
 | Layer | Component | Stack | Responsibilities |
 | --- | --- | --- | --- |
-| L4 | Cloud & Analytics | Firebase · Python · Gemini | Fleet management, predictive maintenance, “mission control” |
+| L4 | Cloud & Analytics | Firebase · Python | Fleet management, predictive maintenance, dashboards |
 | L3 | Application/UI | Flutter (Dart) · Linux/ESP32 | HMIs, technician tooling, theming, configuration, multimedia |
 | L2 | Motion Control | Zephyr RTOS (C/C++) | Dispatch, door profiles, floor leveling, CANopen Master |
 | L1 | Safety Core | Zephyr SIL subset · FPGA | Safety chain, overspeed, interlocks, watchdog arbitration |
 
 ### 🛡️ Safety/Application Split
-- Safety-critical logic ships as a sealed binary (“Safety Kernel”) targeting IEC 61508 SIL 3 and ISO 22201 (PESSRAL).
+- Safety-critical logic ships as a sealed binary ("Safety Kernel") targeting IEC 61508 SIL 3 and ISO 22201 (PESSRAL).
 - Open APIs (`request_floor(5)`, `door_profile.set(...)`) enforce guardrails; watchdogs + redundant sensors fail safe.
 - Apps, drivers, and OTA updates live in the innovation layer; faults trigger a controlled stop without compromising the safety chain.
-
----
-
-## 🤖 Agentic Engineering with Google Antigravity
-- **Mission Control orchestration**: Agents with tool-use read CiA 417 PDFs, craft headers/Object Dictionaries, generate Zephyr C code, spin up QEMU tests, and summarize artifacts automatically.
-- **Artifact-first workflow**: Every mission produces plan docs, diffs, tests, telemetry, or even UI videos—mirroring the V-Model traceability auditors expect.
-- **Rules-as-code**: `.gemini/GEMINI.md` enforces MISRA-C, bans dynamic allocation in RT threads, and validates CANopen structures before code ever lands.
-- **Web Serial toolchain**: Antigravity + Chrome flash ESP32 boards, stream logs, or conduct field diagnostics directly from the browser—no heavy local setup for mechanics.
 
 ---
 
@@ -62,19 +54,19 @@ OpenLift breaks the OEM walled gardens by separating a certified, unhackable saf
    - **Connectivity Processor (ESP32-S3 or Linux SBC)**: Hosts Flutter HMI, Wi-Fi/BLE/OTA, acts as air-gapped gateway to the cloud/Web Serial.
 2. **Industrial CAN Backbone**
    - Galvanically isolated transceivers (ISO1050 family) + digital isolators to survive car/machine room ground differentials.
-   - TVS + gas discharge protection absorb lightning/motor transients; 24 V tolerant and maintenance-friendly.
+   - TVS + gas discharge protection absorb lightning/motor transients; 24 V tolerant and maintenance-friendly.
 3. **CANopen Lift compliance**
-   - Implements virtual devices (Call Controller, Door Unit, Drive Unit) so third-party fixtures “just work.”
+   - Implements virtual devices (Call Controller, Door Unit, Drive Unit) so third-party fixtures "just work."
    - CANopenNode + generated bindings provide ANSI C core with idiomatic C++/Python wrappers.
 
 ---
 
 ## 🧠 Intelligence Layer
-- **OR-Tools dispatch**: Model hall calls as PDPTW; minimize waiting + journey time, with Antigravity retuning penalty weights for up-peak, lunch, down-peak profiles.
+- **OR-Tools dispatch**: Model hall calls as PDPTW; minimize waiting + journey time, with tunable penalty weights for up-peak, lunch, down-peak profiles.
 - **Reinforcement learning frontier**: SimPy gym + DQN agents learn adaptive allocation strategies and benchmark against OR-Tools baselines.
 - **Edge diagnostics**:  
-  - `OpenVibe` FFT pipeline flags 12 Hz guide-roller wear via phone accelerometers (ISO 18738).  
-  - `SpecScanner` ingests legacy PDFs so mechanics can chat with manuals (“What’s the Dover DMC-1 fault blink?”).  
+  - `OpenVibe` FFT pipeline flags 12 Hz guide-roller wear via phone accelerometers (ISO 18738).  
+  - `SpecScanner` ingests legacy PDFs so mechanics can chat with manuals ("What's the Dover DMC-1 fault blink?").  
   - Autoencoders on CAN traces detect door/drive anomalies before they strand riders.
 
 ---
@@ -111,7 +103,7 @@ Upcoming docs (`/docs`):
 ---
 
 ## 🤝 How to Get Involved
-- **Independent Service Providers**: Share modernization blockers, test diagnostics, define “must have” workflows.
+- **Independent Service Providers**: Share modernization blockers, test diagnostics, define "must have" workflows.
 - **Hardware partners**: Offer CANopen Lift fixtures, door operators, or drive units for interoperability testing.
 - **Developers**: Contribute Flutter HMIs, Python analytics, Zephyr board support, or OR-Tools/RL enhancements.
 - **Compliance & safety experts**: Help draft certification plans, safety case documents, and audit-ready artifacts.
@@ -129,4 +121,4 @@ Source drops will occur progressively; nothing here obligates releasing sensitiv
 
 ---
 
-OpenLift exists to give technicians, ISPs, and component vendors the same freedom Android gave handset makers—an open, safety-first platform where innovation is decoupled from proprietary hardware. 🚧 Let’s build the elevator ecosystem we always wished existed.
+OpenLift exists to give technicians, ISPs, and component vendors the same freedom Android gave handset makers—an open, safety-first platform where innovation is decoupled from proprietary hardware. 🚧 Let's build the elevator ecosystem we always wished existed.
