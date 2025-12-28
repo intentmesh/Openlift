@@ -7,6 +7,7 @@ OpenVibe is a command-line tool that turns raw accelerometer logs into actionabl
 - Removes DC offset and applies windowed FFT
 - Detects dominant vibration peaks and maps them to common elevator issues
 - Computes time-domain ride metrics (acceleration + jerk)
+- Handles messy real-world exports (column aliases, delimiter sniffing, timestamp unit auto-detect, gap/jitter stats)
 - Outputs a Markdown + JSON report plus optional PNG spectrum plot
 
 ## Quick Start
@@ -24,6 +25,18 @@ Analyze multiple CSVs and write one summary table:
 
 ```bash
 openvibe ride1.csv ride2.csv ride3.csv --units g --summary-csv summary.csv
+```
+
+Batch outputs are written to per-run folders using a stable `run_id` so files won't overwrite each other.
+
+## Robust CSV Ingestion
+
+- **Column aliases**: headers like `Time`, `Accel X (m/s^2)` etc are accepted.
+- **Delimiters**: comma / semicolon / tab are auto-detected.
+- **Timestamp units**: auto-detected; override if needed:
+
+```bash
+openvibe ride.csv --timestamp-unit ms
 ```
 
 ### Legacy (no install)

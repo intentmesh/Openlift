@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 from pathlib import Path
 
 from openvibe import __version__
@@ -58,6 +59,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="Units of ax/ay/az in the CSV (default: m/s2).",
     )
     parser.add_argument(
+        "--timestamp-unit",
+        default="auto",
+        choices=["auto", "s", "ms", "us", "ns"],
+        help="Timestamp unit in the CSV (default: auto-detect).",
+    )
+    parser.add_argument(
         "--baseline",
         type=Path,
         default=None,
@@ -83,7 +90,7 @@ def main(argv: list[str] | None = None) -> None:
     baseline_band_summary = None
     baseline_load_stats = None
     if baseline_csv is not None:
-        baseline_df = load_data(baseline_csv)
+        baseline_df = load_data(baseline_csv, timestamp_unit=args.timestamp_unit)
         (
             _,
             _,
@@ -96,16 +103,19 @@ def main(argv: list[str] | None = None) -> None:
     summaries: list[dict[str, object]] = []
 
     for csv_path in args.csv:
-        df = load_data(csv_path)
+        df = load_data(csv_path, timestamp_unit=args.timestamp_unit)
+
+        resolved = str(csv_path.resolve())
+        run_id = f"{csv_path.stem}_{hashlib.sha1(resolved.encode('utf-8')).hexdigest()[:8]}"
 
         # Output layout:
         # - If --output is set: always write per-input subfolders inside it.
         # - Else if multiple inputs: write per-input subfolders next to each CSV.
         # - Else: maintain legacy behavior unless --output-subdir is set.
         if args.output is not None:
-            output_dir = args.output / f"{csv_path.stem}_openvibe"
+            output_dir = args.output / f"{run_id}_openvibe"
         elif len(args.csv) > 1 or args.output_subdir:
-            output_dir = csv_path.parent / f"{csv_path.stem}_openvibe"
+            output_dir = csv_path.parent / f"{run_id}_openvibe"
         else:
             output_dir = csv_path.parent
 
@@ -127,6 +137,7 @@ def main(argv: list[str] | None = None) -> None:
 
         md_path, json_path, payload = write_reports(
             output_dir=output_dir,
+            run_id=run_id,
             input_csv=csv_path,
             units=args.units,
             sample_rate_hz=sample_rate,
@@ -154,7 +165,9 @@ def main(argv: list[str] | None = None) -> None:
                 f"raw_rows={int(load_stats.get('raw_rows', 0))}, "
                 f"dropped={int(load_stats.get('rows_dropped_non_numeric_or_na', 0))}, "
                 f"dupe_ts_dropped={int(load_stats.get('duplicate_timestamps_dropped', 0))}, "
-                f"final_rows={int(load_stats.get('final_rows', 0))}"
+                f"final_rows={int(load_stats.get('final_rows', 0))}, "
+                f"dt_median_s={float(load_stats.get('dt_median_s', 0.0)):.6f}, "
+                f"gap_count={int(load_stats.get('gap_count', 0))}"
             )
 
         top_band = max(band_summary, key=lambda b: float(b["fraction"])) if band_summary else None
@@ -185,6 +198,7 @@ def main(argv: list[str] | None = None) -> None:
 
         summaries.append(
             {
+                "run_id": run_id,
                 "input_csv": str(csv_path),
                 "output_dir": str(output_dir),
                 "sample_rate_hz": sample_rate,

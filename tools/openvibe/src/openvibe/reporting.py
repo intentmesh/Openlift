@@ -129,6 +129,7 @@ def analyze_df(
 def write_reports(
     *,
     output_dir: Path,
+    run_id: str | None,
     input_csv: Path,
     units: str,
     sample_rate_hz: float,
@@ -152,6 +153,7 @@ def write_reports(
         "# OpenVibe Ride Quality Report",
         "",
         f"- Tool version: **{__version__}**",
+        f"- Run id: **{run_id or ''}**",
         f"- Input: **{input_csv.name}**",
         f"- Units: **{units}**",
         f"- Sample rate: **{sample_rate_hz:.2f} Hz**",
@@ -163,6 +165,9 @@ def write_reports(
         f"- Dropped rows (non-numeric/NA): **{int(load_stats.get('rows_dropped_non_numeric_or_na', 0))}**",
         f"- Dropped duplicate timestamps: **{int(load_stats.get('duplicate_timestamps_dropped', 0))}**",
         f"- Final rows: **{int(load_stats.get('final_rows', 0))}**",
+        f"- Median dt: **{float(load_stats.get('dt_median_s', 0.0)):.6f} s**",
+        f"- dt p95: **{float(load_stats.get('dt_p95_s', 0.0)):.6f} s**",
+        f"- Gaps (> 3×median dt): **{int(load_stats.get('gap_count', 0))}**",
         "",
         "## Time-Domain Metrics (m/s², m/s³)",
         "",
@@ -184,6 +189,7 @@ def write_reports(
     json_payload: dict[str, object] = {
         "schema_version": SCHEMA_VERSION,
         "tool_version": __version__,
+        "run_id": run_id,
         "input": {"csv": str(input_csv), "units": units},
         "data_quality": load_stats,
         "sample_rate_hz": sample_rate_hz,
