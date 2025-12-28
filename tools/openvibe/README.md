@@ -6,6 +6,7 @@ OpenVibe is a command-line tool that turns raw accelerometer logs into actionabl
 - Imports CSV sensor data (timestamp + X/Y/Z acceleration in m/s² or g)
 - Removes DC offset and applies windowed FFT
 - Detects dominant vibration peaks and maps them to common elevator issues
+- Computes time-domain ride metrics (acceleration + jerk)
 - Outputs a Markdown + JSON report plus optional PNG spectrum plot
 
 ## Quick Start
@@ -38,6 +39,23 @@ Use any mobile logging app (e.g., PhyPhox, SensorLog) and export to CSV.
 - `report.md` – human-readable summary with peak table and remediation hints
 - `report.json` – machine-readable metrics
 - `spectrum.png` (optional) – FFT magnitude plot
+
+## Baseline Comparison
+
+Use a known-good ride trace as a baseline to get deltas:
+
+```bash
+openvibe today.csv --baseline baseline.csv --units g
+```
+
+## Dev Housekeeping
+
+If you're making changes, enable pre-commit so lint/format stay clean:
+
+```bash
+pip install -e ".[dev]"
+pre-commit install
+```
 
 ## Next Steps
 - Live mobile app (Flutter) streaming directly from device sensors

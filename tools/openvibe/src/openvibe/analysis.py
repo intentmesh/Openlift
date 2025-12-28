@@ -9,10 +9,25 @@ import pandas as pd
 
 ISSUE_DB: list[tuple[float, float, str, str]] = [
     (0.5, 2.0, "Counterweight balance", "Check car load balance and counterweight tension."),
-    (2.0, 5.0, "Door operator resonance", "Inspect door rollers, hanger alignment, and sill guides."),
-    (5.0, 9.0, "Rope piston / hoist sway", "Inspect rope tension, compensation chain, and damping pads."),
+    (
+        2.0,
+        5.0,
+        "Door operator resonance",
+        "Inspect door rollers, hanger alignment, and sill guides.",
+    ),
+    (
+        5.0,
+        9.0,
+        "Rope piston / hoist sway",
+        "Inspect rope tension, compensation chain, and damping pads.",
+    ),
     (9.0, 14.0, "Guide roller wear", "Check guide shoes, roller bearings, and lubrication."),
-    (14.0, 25.0, "Drive/sheave alignment", "Inspect machine bedplate, motor bearings, and sheave wear."),
+    (
+        14.0,
+        25.0,
+        "Drive/sheave alignment",
+        "Inspect machine bedplate, motor bearings, and sheave wear.",
+    ),
 ]
 
 
@@ -164,4 +179,3 @@ def maybe_plot(freqs: np.ndarray, amplitude: np.ndarray, output_dir: Path) -> Pa
     plt.savefig(plot_path, dpi=200)
     plt.close()
     return plot_path
-

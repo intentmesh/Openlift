@@ -36,4 +36,9 @@ Cargo.lock
 # macOS
 .DS_Store
 
+# OpenVibe outputs
+tools/openvibe/report.md
+tools/openvibe/report.json
+tools/openvibe/spectrum.png
+
 

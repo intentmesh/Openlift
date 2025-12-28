@@ -46,4 +46,3 @@ def test_find_peaks_detects_dominant_frequency() -> None:
     peaks = find_peaks(freqs, amp, max_peaks=3)
     assert peaks, "Expected at least one peak"
     assert abs(peaks[0].frequency - 3.0) < 0.5
-
