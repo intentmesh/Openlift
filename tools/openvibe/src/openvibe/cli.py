@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+from openvibe import __version__
 from openvibe.analysis import (
     load_data,
     maybe_plot,
@@ -11,13 +12,28 @@ from openvibe.reporting import analyze_df, write_reports
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Analyze elevator ride vibration data.")
+    parser = argparse.ArgumentParser(
+        description="Analyze elevator ride vibration data.",
+        epilog=(
+            "Examples:\n"
+            "  openvibe ride.csv --units g --plot\n"
+            "  openvibe today.csv --baseline baseline.csv --units g\n"
+            "  openvibe ride.csv --output-subdir\n"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument("--version", action="version", version=f"openvibe {__version__}")
     parser.add_argument("csv", type=Path, help="CSV file with timestamp, ax, ay, az columns.")
     parser.add_argument(
         "--output",
         type=Path,
         default=None,
         help="Output directory for reports (default: alongside CSV).",
+    )
+    parser.add_argument(
+        "--output-subdir",
+        action="store_true",
+        help="Write outputs to a dedicated subfolder (<csv_stem>_openvibe) when --output isn't set.",
     )
     parser.add_argument(
         "--plot",
@@ -51,6 +67,8 @@ def main(argv: list[str] | None = None) -> None:
 
     df = load_data(args.csv)
     output_dir = args.output or args.csv.parent
+    if args.output is None and args.output_subdir:
+        output_dir = args.csv.parent / f"{args.csv.stem}_openvibe"
 
     sample_rate, duration, peaks, metrics, band_summary = analyze_df(
         df, max_peaks=args.max_peaks, units=args.units
@@ -63,6 +81,8 @@ def main(argv: list[str] | None = None) -> None:
 
         freqs, amplitude = compute_fft(df, sample_rate)
         plot_path = maybe_plot(freqs, amplitude, output_dir)
+        if plot_path is None:
+            print("Note: --plot requested but matplotlib isn't available. Install: openvibe[plot]")
 
     baseline_csv = None
     baseline_peaks = None
@@ -75,7 +95,7 @@ def main(argv: list[str] | None = None) -> None:
             baseline_df, max_peaks=args.max_peaks, units=args.units
         )
 
-    write_reports(
+    md_path, json_path, payload = write_reports(
         output_dir=output_dir,
         input_csv=args.csv,
         units=args.units,
@@ -91,9 +111,36 @@ def main(argv: list[str] | None = None) -> None:
         baseline_band_summary=baseline_band_summary,
     )
 
-    print(f"Report written to {output_dir.resolve()}")
-    if not peaks:
+    # Friendly console summary (so you don't have to open report.md every time).
+    print(f"Wrote: {md_path} and {json_path}")
+    if plot_path is not None:
+        print(f"Wrote: {plot_path}")
+
+    top_band = max(band_summary, key=lambda b: float(b["fraction"])) if band_summary else None
+    if top_band is not None:
+        print(f"Top band: {top_band['label']} (fraction {float(top_band['fraction']):.3f})")
+
+    if peaks:
+        p0 = peaks[0]
+        print(f"Top peak: {p0.frequency:.2f} Hz ({p0.issue})")
+    else:
         print("No significant vibration peaks detected. Consider recording a longer trace.")
+
+    print(
+        "Key metrics: "
+        f"accel_rms={metrics.accel_rms_vector:.4f} m/s², "
+        f"jerk_rms={metrics.jerk_rms_vector:.4f} m/s³"
+    )
+
+    baseline = payload.get("baseline")
+    if isinstance(baseline, dict) and "delta_spectral_bands" in baseline:
+        deltas = baseline["delta_spectral_bands"]
+        if isinstance(deltas, list) and deltas:
+            worst = max(deltas, key=lambda b: abs(float(b.get("delta_fraction", 0.0))))
+            print(
+                "Biggest band delta: "
+                f"{worst.get('label')} ({float(worst.get('delta_fraction', 0.0)):+.3f})"
+            )
 
 
 if __name__ == "__main__":

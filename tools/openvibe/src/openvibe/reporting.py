@@ -133,7 +133,7 @@ def write_reports(
     baseline_peaks: list[Peak] | None = None,
     baseline_metrics: TimeMetrics | None = None,
     baseline_band_summary: list[dict[str, float | str]] | None = None,
-) -> None:
+) -> tuple[Path, Path, dict[str, object]]:
     output_dir.mkdir(parents=True, exist_ok=True)
     md_path = output_dir / "report.md"
     json_path = output_dir / "report.json"
@@ -272,3 +272,4 @@ def write_reports(
 
     md_path.write_text("\n".join(md_lines), encoding="utf-8")
     json_path.write_text(json.dumps(json_payload, indent=2), encoding="utf-8")
+    return md_path, json_path, json_payload

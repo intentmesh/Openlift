@@ -15,7 +15,7 @@ OpenVibe is a command-line tool that turns raw accelerometer logs into actionabl
 cd tools/openvibe
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e ".[plot]"
-openvibe sample_data.csv --plot
+openvibe sample_data.csv --plot --output-subdir
 ```
 
 ### Legacy (no install)
@@ -47,6 +47,10 @@ Use a known-good ride trace as a baseline to get deltas:
 ```bash
 openvibe today.csv --baseline baseline.csv --units g
 ```
+
+## Tips
+- Use `--output-subdir` to avoid overwriting previous runs.
+- Run `openvibe --help` to see all options (including `--version`).
 
 ## Dev Housekeeping
 
