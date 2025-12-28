@@ -1,0 +1,12 @@
+README.md
+pyproject.toml
+src/openvibe/__init__.py
+src/openvibe/analysis.py
+src/openvibe/cli.py
+src/openvibe.egg-info/PKG-INFO
+src/openvibe.egg-info/SOURCES.txt
+src/openvibe.egg-info/dependency_links.txt
+src/openvibe.egg-info/entry_points.txt
+src/openvibe.egg-info/requires.txt
+src/openvibe.egg-info/top_level.txt
+tests/test_analysis.py
