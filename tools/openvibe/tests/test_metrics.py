@@ -37,3 +37,18 @@ def test_time_metrics_units_g_scales_to_mps2() -> None:
     df = _sine_df(freq_hz=2.0, sample_rate_hz=500.0, seconds=4.0, amplitude=1.0)  # 1 g peak
     m = compute_time_metrics(df, units="g")
     assert abs(m.accel_rms_vector - (G0_MPS2 / math.sqrt(2.0))) < 0.05
+
+
+def test_time_metrics_remove_dc_avoids_gravity_domination() -> None:
+    # Constant 1 g on Z should not appear as "vibration" when DC is removed.
+    t = np.linspace(0, 2.0, 501)
+    df = pd.DataFrame(
+        {
+            "timestamp": t,
+            "ax": np.zeros_like(t),
+            "ay": np.zeros_like(t),
+            "az": np.ones_like(t),
+        }
+    )
+    m = compute_time_metrics(df, units="g", remove_dc=True)
+    assert m.accel_rms_vector < 1e-6

@@ -33,6 +33,20 @@ def test_load_data_validates_columns(tmp_path: Path) -> None:
         assert "Missing columns" in str(e)
 
 
+def test_load_data_sorts_and_dedupes_timestamps(tmp_path: Path) -> None:
+    p = tmp_path / "messy.csv"
+    pd.DataFrame(
+        {
+            "timestamp": [2.0, 1.0, 1.0, "bad"],
+            "ax": [0.0, 0.0, 0.0, 0.0],
+            "ay": [0.0, 0.0, 0.0, 0.0],
+            "az": [0.0, 0.0, 0.0, 0.0],
+        }
+    ).to_csv(p, index=False)
+    df = load_data(p)
+    assert df["timestamp"].tolist() == [1.0, 2.0]
+
+
 def test_estimate_sample_rate_matches_input() -> None:
     df = _sine_df(freq_hz=3.0, sample_rate_hz=100.0, seconds=2.0)
     sr = estimate_sample_rate(df)

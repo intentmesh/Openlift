@@ -45,6 +45,16 @@ def load_data(path: Path) -> pd.DataFrame:
     missing = expected - set(df.columns)
     if missing:
         raise ValueError(f"Missing columns in CSV: {', '.join(sorted(missing))}")
+
+    # Real-world mobile exports can contain blank rows, strings, NaNs, duplicate timestamps,
+    # and out-of-order samples. Normalize to a clean, monotonic trace.
+    for col in ["timestamp", "ax", "ay", "az"]:
+        df[col] = pd.to_numeric(df[col], errors="coerce")
+
+    df = df.dropna(subset=["timestamp", "ax", "ay", "az"]).copy()
+    df = df.sort_values("timestamp", kind="mergesort")
+    df = df.drop_duplicates(subset=["timestamp"], keep="first")
+    df = df.reset_index(drop=True)
     return df
 
 

@@ -75,7 +75,8 @@ def analyze_df(
     duration = float(df["timestamp"].iloc[-1] - df["timestamp"].iloc[0]) if len(df) else 0.0
     freqs, amplitude = compute_fft(df, sample_rate)
     peaks = find_peaks(freqs, amplitude, max_peaks)
-    metrics = compute_time_metrics(df, units=units)
+    # Time-domain metrics are computed on the AC component by default (DC/gravity removed).
+    metrics = compute_time_metrics(df, units=units, remove_dc=True)
     return sample_rate, duration, peaks, metrics
 
 
@@ -107,6 +108,8 @@ def write_reports(
         f"- Recording duration: **{duration_seconds:.1f} s**",
         "",
         "## Time-Domain Metrics (m/s², m/s³)",
+        "",
+        f"- DC removed: **{metrics.dc_removed}**",
         "",
         "| Metric | Value |",
         "| --- | ---: |",

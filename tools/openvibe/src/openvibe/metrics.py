@@ -32,6 +32,7 @@ def units_scale_to_mps2(units: str) -> float:
 @dataclass(frozen=True)
 class TimeMetrics:
     units: str
+    dc_removed: bool
     accel_rms_x: float
     accel_rms_y: float
     accel_rms_z: float
@@ -46,6 +47,7 @@ class TimeMetrics:
     def to_json(self) -> dict[str, float | str]:
         return {
             "units": self.units,
+            "dc_removed": self.dc_removed,
             "accel_rms_x": self.accel_rms_x,
             "accel_rms_y": self.accel_rms_y,
             "accel_rms_z": self.accel_rms_z,
@@ -73,12 +75,13 @@ def _pctl(x: np.ndarray, p: float) -> float:
     return float(np.percentile(x, p))
 
 
-def compute_time_metrics(df: pd.DataFrame, *, units: str) -> TimeMetrics:
+def compute_time_metrics(df: pd.DataFrame, *, units: str, remove_dc: bool = True) -> TimeMetrics:
     """
     Compute time-domain ride metrics from raw accelerometer axes.
 
     Notes:
     - Acceleration is converted to m/s^2 (or treated as already m/s^2) based on `units`.
+    - By default, DC is removed per-axis (helps avoid gravity/tilt dominating vibration metrics).
     - Jerk is computed via numerical gradient against the provided timestamps.
     - Vector metrics are computed as sqrt(x^2+y^2+z^2) of the corresponding quantity.
     """
@@ -88,6 +91,11 @@ def compute_time_metrics(df: pd.DataFrame, *, units: str) -> TimeMetrics:
     ax = df["ax"].to_numpy(dtype=float) * scale
     ay = df["ay"].to_numpy(dtype=float) * scale
     az = df["az"].to_numpy(dtype=float) * scale
+
+    if remove_dc:
+        ax = ax - float(np.mean(ax)) if ax.size else ax
+        ay = ay - float(np.mean(ay)) if ay.size else ay
+        az = az - float(np.mean(az)) if az.size else az
 
     a_vec = np.sqrt(ax * ax + ay * ay + az * az)
 
@@ -104,6 +112,7 @@ def compute_time_metrics(df: pd.DataFrame, *, units: str) -> TimeMetrics:
 
     return TimeMetrics(
         units="m/s2",
+        dc_removed=remove_dc,
         accel_rms_x=_rms(ax),
         accel_rms_y=_rms(ay),
         accel_rms_z=_rms(az),
