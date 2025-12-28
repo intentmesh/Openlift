@@ -39,6 +39,27 @@ Batch outputs are written to per-run folders using a stable `run_id` so files wo
 openvibe ride.csv --timestamp-unit ms
 ```
 
+## Fingerprints + Baselines + Scoring (new)
+
+Create a fingerprint (compact feature vector) for later comparison:
+
+```bash
+openvibe fingerprint ride.csv --units g --out .
+```
+
+Add fingerprints to a baseline group and build a model:
+
+```bash
+openvibe baseline add *.fingerprint.json --tag elevator=E12
+openvibe baseline build --tag elevator=E12
+```
+
+Score a new ride against that baseline (explainable anomaly score):
+
+```bash
+openvibe score today.csv --tag elevator=E12
+```
+
 ### Legacy (no install)
 
 ```bash
