@@ -1,3 +1,4 @@
+> **Disclaimer**: This repository is a field-driven reference implementation and discussion starter. It is not a complete or production-ready system. Development may be intermittent; please view this as an open blueprint for the community to learn from and iterate on rather than a supported product.
 # 🚀 OpenLift: The Open Vertical Transportation Platform
 
 > Vendor-neutral safety core + intelligent app layer = the open standard for the modernization era.
