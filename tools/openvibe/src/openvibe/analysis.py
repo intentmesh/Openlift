@@ -46,15 +46,34 @@ def load_data(path: Path) -> pd.DataFrame:
     if missing:
         raise ValueError(f"Missing columns in CSV: {', '.join(sorted(missing))}")
 
+    raw_rows = int(len(df))
+
     # Real-world mobile exports can contain blank rows, strings, NaNs, duplicate timestamps,
     # and out-of-order samples. Normalize to a clean, monotonic trace.
     for col in ["timestamp", "ax", "ay", "az"]:
         df[col] = pd.to_numeric(df[col], errors="coerce")
 
-    df = df.dropna(subset=["timestamp", "ax", "ay", "az"]).copy()
+    required = ["timestamp", "ax", "ay", "az"]
+    na_rows = int(df[required].isna().any(axis=1).sum())
+
+    df = df.dropna(subset=required).copy()
     df = df.sort_values("timestamp", kind="mergesort")
+    before_dedup = int(len(df))
     df = df.drop_duplicates(subset=["timestamp"], keep="first")
+    duplicate_timestamps_dropped = before_dedup - int(len(df))
     df = df.reset_index(drop=True)
+
+    ts_min = float(df["timestamp"].iloc[0]) if len(df) else None
+    ts_max = float(df["timestamp"].iloc[-1]) if len(df) else None
+
+    df.attrs["openvibe_load_stats"] = {
+        "raw_rows": raw_rows,
+        "rows_dropped_non_numeric_or_na": na_rows,
+        "duplicate_timestamps_dropped": duplicate_timestamps_dropped,
+        "final_rows": int(len(df)),
+        "timestamp_min": ts_min,
+        "timestamp_max": ts_max,
+    }
     return df
 
 

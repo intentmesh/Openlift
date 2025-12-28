@@ -52,6 +52,24 @@ def test_load_data_sorts_and_dedupes_timestamps(tmp_path: Path) -> None:
     ).to_csv(p, index=False)
     df = load_data(p)
     assert df["timestamp"].tolist() == [1.0, 2.0]
+    stats = df.attrs.get("openvibe_load_stats", {})
+    assert stats.get("raw_rows") == 4
+    assert stats.get("final_rows") == 2
+
+
+def test_load_data_stats_counts_dedupes(tmp_path: Path) -> None:
+    p = tmp_path / "dupes.csv"
+    pd.DataFrame(
+        {
+            "timestamp": [0.0, 0.0, 0.1],
+            "ax": [0.0, 0.0, 0.0],
+            "ay": [0.0, 0.0, 0.0],
+            "az": [0.0, 0.0, 0.0],
+        }
+    ).to_csv(p, index=False)
+    df = load_data(p)
+    stats = df.attrs.get("openvibe_load_stats", {})
+    assert stats.get("duplicate_timestamps_dropped") == 1
 
 
 def test_estimate_sample_rate_matches_input() -> None:

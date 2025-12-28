@@ -18,6 +18,14 @@ pip install -e ".[plot]"
 openvibe sample_data.csv --plot --output-subdir
 ```
 
+## Batch Mode (multiple files)
+
+Analyze multiple CSVs and write one summary table:
+
+```bash
+openvibe ride1.csv ride2.csv ride3.csv --units g --summary-csv summary.csv
+```
+
 ### Legacy (no install)
 
 ```bash

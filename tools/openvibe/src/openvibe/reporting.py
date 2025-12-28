@@ -107,7 +107,15 @@ def _delta_spectral_bands(
 
 def analyze_df(
     df: pd.DataFrame, *, max_peaks: int, units: str
-) -> tuple[float, float, list[Peak], TimeMetrics, list[dict[str, float | str]]]:
+) -> tuple[
+    float,
+    float,
+    list[Peak],
+    TimeMetrics,
+    list[dict[str, float | str]],
+    dict[str, object],
+]:
+    load_stats = df.attrs.get("openvibe_load_stats", {})
     sample_rate = estimate_sample_rate(df)
     duration = float(df["timestamp"].iloc[-1] - df["timestamp"].iloc[0]) if len(df) else 0.0
     freqs, amplitude = compute_fft(df, sample_rate)
@@ -115,7 +123,7 @@ def analyze_df(
     # Time-domain metrics are computed on the AC component by default (DC/gravity removed).
     metrics = compute_time_metrics(df, units=units, remove_dc=True)
     bands = band_power_summary(freqs, amplitude, bands=DEFAULT_BANDS)
-    return sample_rate, duration, peaks, metrics, bands
+    return sample_rate, duration, peaks, metrics, bands, dict(load_stats)
 
 
 def write_reports(
@@ -128,11 +136,13 @@ def write_reports(
     peaks: list[Peak],
     metrics: TimeMetrics,
     band_summary: list[dict[str, float | str]],
+    load_stats: dict[str, object],
     plot_path: Path | None,
     baseline_csv: Path | None = None,
     baseline_peaks: list[Peak] | None = None,
     baseline_metrics: TimeMetrics | None = None,
     baseline_band_summary: list[dict[str, float | str]] | None = None,
+    baseline_load_stats: dict[str, object] | None = None,
 ) -> tuple[Path, Path, dict[str, object]]:
     output_dir.mkdir(parents=True, exist_ok=True)
     md_path = output_dir / "report.md"
@@ -146,6 +156,13 @@ def write_reports(
         f"- Units: **{units}**",
         f"- Sample rate: **{sample_rate_hz:.2f} Hz**",
         f"- Recording duration: **{duration_seconds:.1f} s**",
+        "",
+        "## Data Quality",
+        "",
+        f"- Raw rows: **{int(load_stats.get('raw_rows', 0))}**",
+        f"- Dropped rows (non-numeric/NA): **{int(load_stats.get('rows_dropped_non_numeric_or_na', 0))}**",
+        f"- Dropped duplicate timestamps: **{int(load_stats.get('duplicate_timestamps_dropped', 0))}**",
+        f"- Final rows: **{int(load_stats.get('final_rows', 0))}**",
         "",
         "## Time-Domain Metrics (m/s², m/s³)",
         "",
@@ -168,6 +185,7 @@ def write_reports(
         "schema_version": SCHEMA_VERSION,
         "tool_version": __version__,
         "input": {"csv": str(input_csv), "units": units},
+        "data_quality": load_stats,
         "sample_rate_hz": sample_rate_hz,
         "duration_seconds": duration_seconds,
         "time_metrics": metrics.to_json(),
@@ -215,6 +233,22 @@ def write_reports(
                 "",
                 f"- Baseline input: **{baseline_csv.name}**",
                 "",
+            ]
+        )
+        if baseline_load_stats is not None:
+            md_lines.extend(
+                [
+                    "### Baseline Data Quality",
+                    "",
+                    f"- Raw rows: **{int(baseline_load_stats.get('raw_rows', 0))}**",
+                    f"- Dropped rows (non-numeric/NA): **{int(baseline_load_stats.get('rows_dropped_non_numeric_or_na', 0))}**",
+                    f"- Dropped duplicate timestamps: **{int(baseline_load_stats.get('duplicate_timestamps_dropped', 0))}**",
+                    f"- Final rows: **{int(baseline_load_stats.get('final_rows', 0))}**",
+                    "",
+                ]
+            )
+        md_lines.extend(
+            [
                 "### Delta Time Metrics (current − baseline)",
                 "",
                 "| Metric | Delta |",
@@ -256,6 +290,7 @@ def write_reports(
 
         json_payload["baseline"] = {
             "csv": str(baseline_csv),
+            "data_quality": baseline_load_stats or {},
             "time_metrics": baseline_metrics.to_json(),
             "delta_time_metrics": _delta_metrics(metrics, baseline_metrics),
             "spectral_bands": baseline_band_summary,
