@@ -45,6 +45,8 @@ def test_baseline_build_and_score(tmp_path: Path) -> None:
     df2.to_csv(csv2, index=False)
     fp2 = build_fingerprint(df2, input_csv=csv2, units="m/s2", max_peaks=3)
 
-    score, top = score_features(features=fp2.features, model=model)
+    score, rms_z, n_used, top = score_features(features=fp2.features, model=model)
     assert score > 5.0
+    assert rms_z > 0
+    assert n_used > 0
     assert top

@@ -112,6 +112,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--tag", action="append", default=[], help="Group tag key=value", dest="tags"
     )
 
+    baseline_info = baseline_sub.add_parser("info", help="Show group model info.")
+    baseline_info.add_argument("--store", type=Path, default=default_store_path())
+    baseline_info.add_argument(
+        "--tag", action="append", default=[], help="Group tag key=value", dest="tags"
+    )
+
     baseline_list = baseline_sub.add_parser("list", help="List groups.")
     baseline_list.add_argument("--store", type=Path, default=default_store_path())
 
@@ -123,6 +129,18 @@ def build_parser() -> argparse.ArgumentParser:
         "--tag", action="append", default=[], help="Group tag key=value", dest="tags"
     )
     score.add_argument("--json", action="store_true", help="Print JSON output.")
+    score.add_argument(
+        "--min-samples",
+        type=int,
+        default=5,
+        help="Minimum baseline samples required for reliable scoring (default: 5).",
+    )
+    score.add_argument(
+        "--weights",
+        type=Path,
+        default=None,
+        help="Optional JSON file mapping feature->weight overrides.",
+    )
     score.add_argument("--max-peaks", type=int, default=4)
     score.add_argument(
         "--units",
@@ -301,24 +319,49 @@ def _cmd_baseline(args: argparse.Namespace) -> None:
         print(f"Built baseline model for {group_key(tags)} (n={model.n})")
         return
 
+    if args.baseline_cmd == "info":
+        model = get_or_build_model(store_path=store_path, tags=tags)
+        print(f"Group: {group_key(tags)}")
+        print(f"Samples: {model.n}")
+        # High-signal features only.
+        keys = sorted(k for k in model.center.keys() if k in model.mad)
+        print(f"Features: {len(keys)}")
+        for k in keys[:20]:
+            print(f"- {k}: center={model.center[k]:.6g}, mad={model.mad.get(k, 0.0):.6g}")
+        if len(keys) > 20:
+            print(f"... ({len(keys) - 20} more)")
+        return
+
     raise ValueError(f"Unknown baseline command: {args.baseline_cmd}")
 
 
 def _cmd_score(args: argparse.Namespace) -> None:
     tags = _parse_tags(args.tags)
     model = get_or_build_model(store_path=args.store, tags=tags)
+    weights = None
+    if args.weights is not None:
+        weights_obj = json.loads(args.weights.read_text(encoding="utf-8"))
+        if not isinstance(weights_obj, dict):
+            raise ValueError("weights must be a JSON object of feature->weight")
+        weights = {str(k): float(v) for k, v in weights_obj.items()}
     out_all: list[dict[str, object]] = []
 
     for csv_path in args.csv:
         df = load_data(csv_path, timestamp_unit=args.timestamp_unit)
         fp = build_fingerprint(df, input_csv=csv_path, units=args.units, max_peaks=args.max_peaks)
-        score, contributors = score_features(features=fp.features, model=model)
+        score, rms_z, n_used, contributors = score_features(
+            features=fp.features, model=model, weights=weights
+        )
+        confidence = min(1.0, model.n / max(1, args.min_samples))
         row = {
             "run_id": fp.run_id,
             "input_csv": fp.input_csv,
             "group": group_key(tags),
             "baseline_n": model.n,
             "anomaly_score": score,
+            "confidence": confidence,
+            "rms_z": rms_z,
+            "features_used": n_used,
             "top_contributors": contributors,
         }
         out_all.append(row)
@@ -326,7 +369,13 @@ def _cmd_score(args: argparse.Namespace) -> None:
         if not args.json:
             print(f"\n== {csv_path.name} ==")
             print(f"Group: {group_key(tags)} (baseline n={model.n})")
+            if model.n < args.min_samples:
+                print(
+                    f"Warning: baseline has only {model.n} samples; "
+                    f"recommended minimum is {args.min_samples}."
+                )
             print(f"Anomaly score: {score:.1f}/100")
+            print(f"Confidence: {confidence:.2f}")
             if contributors:
                 top = ", ".join(
                     f"{c['feature']} ({c['contribution']:.2f})" for c in contributors[:5]

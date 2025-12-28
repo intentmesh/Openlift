@@ -60,6 +60,12 @@ Score a new ride against that baseline (explainable anomaly score):
 openvibe score today.csv --tag elevator=E12
 ```
 
+For field reliability, scoring is most meaningful once you have a baseline of ~5+ rides:
+
+```bash
+openvibe score today.csv --tag elevator=E12 --min-samples 5
+```
+
 ### Legacy (no install)
 
 ```bash

@@ -10,6 +10,24 @@ from pathlib import Path
 
 BASELINES_SCHEMA_VERSION = "openvibe.baselines.v1"
 
+DEFAULT_WEIGHTS: dict[str, float] = {
+    # Non-signal / environment-dependent: ignore by default to avoid false positives.
+    "sample_rate_hz": 0.0,
+    "duration_seconds": 0.0,
+    "dt_median_s": 0.0,
+    "dt_p95_s": 0.0,
+    # Integrity: still useful, but don't let it dominate the vibration anomaly score.
+    "gap_count": 0.25,
+    # Core vibration signals:
+    "accel_rms_vector_mps2": 1.0,
+    "accel_p95_vector_mps2": 0.75,
+    "jerk_rms_vector_mps3": 1.25,
+    "jerk_p95_vector_mps3": 1.0,
+    # Peaks: optional, lower weight by default (depends on windowing/length).
+    "top_peak_hz": 0.25,
+    "top_peak_amp": 0.5,
+}
+
 
 def default_store_path() -> Path:
     return Path(".openvibe") / "baselines.json"
@@ -189,14 +207,14 @@ def score_features(
     features: dict[str, float],
     model: BaselineModel,
     weights: dict[str, float] | None = None,
-) -> tuple[float, list[dict[str, object]]]:
+) -> tuple[float, float, int, list[dict[str, object]]]:
     """
     Return (score_0_100, top_contributors).
 
     We use robust z-scores with MAD; overall score is mapped via an exponential curve.
     """
 
-    weights = weights or {}
+    weights = {**DEFAULT_WEIGHTS, **(weights or {})}
     eps = 1e-9
     contributions: list[tuple[str, float]] = []
     z2_sum = 0.0
@@ -209,8 +227,18 @@ def score_features(
             continue
         med = model.center[k]
         mad = model.mad.get(k, 0.0)
-        # Convert MAD to sigma-ish scale (Normal approx).
-        sigma = max(eps, 1.4826 * mad)
+        # Convert MAD to sigma-ish scale (Normal approx), with a floor to avoid
+        # "MAD=0 => infinite z" for small baselines (field reality).
+        sigma_mad = 1.4826 * mad
+        if k.startswith("band_") and k.endswith("_fraction"):
+            sigma_floor = 0.02
+        elif k == "gap_count":
+            sigma_floor = 1.0
+        elif k.startswith("dt_") and k.endswith("_s"):
+            sigma_floor = 0.001
+        else:
+            sigma_floor = max(1e-6, 0.10 * abs(med))
+        sigma = max(eps, sigma_mad, sigma_floor)
         z = (x - med) / sigma
         z2_sum += (w * z) ** 2
         n += 1
@@ -222,4 +250,4 @@ def score_features(
 
     top = sorted(contributions, key=lambda kv: kv[1], reverse=True)[:8]
     top_out = [{"feature": k, "contribution": c} for k, c in top]
-    return score, top_out
+    return score, rms_z, n, top_out

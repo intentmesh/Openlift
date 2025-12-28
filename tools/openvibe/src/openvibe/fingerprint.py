@@ -109,4 +109,12 @@ def write_fingerprint(fp: Fingerprint, path: Path) -> None:
 
 
 def read_fingerprint(path: Path) -> dict[str, object]:
-    return json.loads(path.read_text(encoding="utf-8"))
+    fp = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(fp, dict):
+        raise ValueError("Invalid fingerprint: root must be an object")
+    if fp.get("schema_version") != FINGERPRINT_SCHEMA_VERSION:
+        raise ValueError(f"Unsupported fingerprint schema_version: {fp.get('schema_version')!r}")
+    feats = fp.get("features")
+    if not isinstance(feats, dict):
+        raise ValueError("Invalid fingerprint: missing features object")
+    return fp
