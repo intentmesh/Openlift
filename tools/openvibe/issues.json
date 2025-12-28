@@ -1,0 +1,33 @@
+[
+  {
+    "f_low": 0.5,
+    "f_high": 2.0,
+    "issue": "Counterweight balance",
+    "recommendation": "Check car load balance, counterweight and governor tension."
+  },
+  {
+    "f_low": 2.0,
+    "f_high": 5.0,
+    "issue": "Door operator resonance",
+    "recommendation": "Inspect door rollers, hanger adjustment, sill guides, and clutch clearances."
+  },
+  {
+    "f_low": 5.0,
+    "f_high": 9.0,
+    "issue": "Hoistway sway / rope piston",
+    "recommendation": "Verify rope tension uniformity, compensation chains, and damping hardware."
+  },
+  {
+    "f_low": 9.0,
+    "f_high": 14.0,
+    "issue": "Guide roller wear",
+    "recommendation": "Inspect guide shoes, roller bearings, and lubrication schedule."
+  },
+  {
+    "f_low": 14.0,
+    "f_high": 25.0,
+    "issue": "Drive or sheave alignment",
+    "recommendation": "Check machine bedplate leveling, motor bearings, and sheave eccentricity."
+  }
+]
+

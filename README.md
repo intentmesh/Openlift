@@ -98,6 +98,9 @@ OpenLift breaks the OEM walled gardens by separating a safety-critical kernel fr
 - `tools/openvibe/` – ride-quality analyzer that turns accelerometer CSV logs into diagnostics.
 - `docs/` – Architecture, compliance strategy, and detailed roadmap.
 
+## 🧰 Featured Tool: OpenVibe
+OpenVibe is the Phase-1 flagship utility. It ingests phone accelerometer logs, applies ISO 18738 metrics (RMS acceleration, jerk, comfort class), classifies dominant vibration peaks via configurable frequency bands, and emits Markdown/JSON reports. Run it locally via `make run` or inside Docker, and extend the issue knowledge base by editing `tools/openvibe/issues.json`.
+
 ---
 
 ## 🤝 How to Get Involved
