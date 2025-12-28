@@ -6,7 +6,14 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from openvibe.analysis import compute_fft, estimate_sample_rate, find_peaks, load_data
+from openvibe.analysis import (
+    band_power_summary,
+    compute_fft,
+    estimate_sample_rate,
+    find_peaks,
+    load_data,
+)
+from openvibe.reporting import DEFAULT_BANDS
 
 
 def _sine_df(freq_hz: float, sample_rate_hz: float, seconds: float) -> pd.DataFrame:
@@ -60,3 +67,12 @@ def test_find_peaks_detects_dominant_frequency() -> None:
     peaks = find_peaks(freqs, amp, max_peaks=3)
     assert peaks, "Expected at least one peak"
     assert abs(peaks[0].frequency - 3.0) < 0.5
+
+
+def test_band_power_summary_places_sine_in_expected_band() -> None:
+    df = _sine_df(freq_hz=3.0, sample_rate_hz=100.0, seconds=4.0)
+    sr = estimate_sample_rate(df)
+    freqs, amp = compute_fft(df, sr)
+    bands = band_power_summary(freqs, amp, bands=DEFAULT_BANDS)
+    top = max(bands, key=lambda b: float(b["fraction"]))
+    assert "2–5 Hz" in str(top["label"])

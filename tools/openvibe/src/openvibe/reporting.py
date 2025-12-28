@@ -7,10 +7,25 @@ from pathlib import Path
 import pandas as pd
 
 from openvibe import __version__
-from openvibe.analysis import Peak, compute_fft, estimate_sample_rate, find_peaks
+from openvibe.analysis import (
+    Peak,
+    band_power_summary,
+    compute_fft,
+    estimate_sample_rate,
+    find_peaks,
+)
 from openvibe.metrics import TimeMetrics, compute_time_metrics
 
 SCHEMA_VERSION = "openvibe.report.v1"
+
+DEFAULT_BANDS: list[tuple[float, float, str]] = [
+    (0.5, 2.0, "0.5–2 Hz (Counterweight/balance)"),
+    (2.0, 5.0, "2–5 Hz (Door resonance)"),
+    (5.0, 9.0, "5–9 Hz (Hoist sway)"),
+    (9.0, 14.0, "9–14 Hz (Guide rollers)"),
+    (14.0, 25.0, "14–25 Hz (Drive/sheave)"),
+    (25.0, 30.0, "25–30 Hz (Other)"),
+]
 
 
 @dataclass(frozen=True)
@@ -68,16 +83,39 @@ def _delta_metrics(current: TimeMetrics, baseline: TimeMetrics) -> dict[str, flo
     }
 
 
+def _delta_spectral_bands(
+    current: list[dict[str, float | str]],
+    baseline: list[dict[str, float | str]],
+) -> list[dict[str, float | str]]:
+    cur = {str(b["label"]): float(b["fraction"]) for b in current}
+    base = {str(b["label"]): float(b["fraction"]) for b in baseline}
+    labels = sorted(set(cur) | set(base))
+    out: list[dict[str, float | str]] = []
+    for label in labels:
+        c = cur.get(label, 0.0)
+        b = base.get(label, 0.0)
+        out.append(
+            {
+                "label": label,
+                "current_fraction": c,
+                "baseline_fraction": b,
+                "delta_fraction": c - b,
+            }
+        )
+    return out
+
+
 def analyze_df(
     df: pd.DataFrame, *, max_peaks: int, units: str
-) -> tuple[float, float, list[Peak], TimeMetrics]:
+) -> tuple[float, float, list[Peak], TimeMetrics, list[dict[str, float | str]]]:
     sample_rate = estimate_sample_rate(df)
     duration = float(df["timestamp"].iloc[-1] - df["timestamp"].iloc[0]) if len(df) else 0.0
     freqs, amplitude = compute_fft(df, sample_rate)
     peaks = find_peaks(freqs, amplitude, max_peaks)
     # Time-domain metrics are computed on the AC component by default (DC/gravity removed).
     metrics = compute_time_metrics(df, units=units, remove_dc=True)
-    return sample_rate, duration, peaks, metrics
+    bands = band_power_summary(freqs, amplitude, bands=DEFAULT_BANDS)
+    return sample_rate, duration, peaks, metrics, bands
 
 
 def write_reports(
@@ -89,10 +127,12 @@ def write_reports(
     duration_seconds: float,
     peaks: list[Peak],
     metrics: TimeMetrics,
+    band_summary: list[dict[str, float | str]],
     plot_path: Path | None,
     baseline_csv: Path | None = None,
     baseline_peaks: list[Peak] | None = None,
     baseline_metrics: TimeMetrics | None = None,
+    baseline_band_summary: list[dict[str, float | str]] | None = None,
 ) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     md_path = output_dir / "report.md"
@@ -118,10 +158,10 @@ def write_reports(
         f"| Jerk RMS (vector) | {metrics.jerk_rms_vector:.4f} |",
         f"| Jerk P95 (vector) | {metrics.jerk_p95_vector:.4f} |",
         "",
-        "## Dominant Vibrations (0.5–30 Hz)",
+        "## Spectral Band Energy (0.5–30 Hz)",
         "",
-        "| Frequency (Hz) | Relative amplitude | Suspected issue | Recommendation |",
-        "| ---: | ---: | --- | --- |",
+        "| Band | Power fraction |",
+        "| --- | ---: |",
     ]
 
     json_payload: dict[str, object] = {
@@ -131,8 +171,22 @@ def write_reports(
         "sample_rate_hz": sample_rate_hz,
         "duration_seconds": duration_seconds,
         "time_metrics": metrics.to_json(),
+        "spectral_bands": band_summary,
         "peaks": [],
     }
+
+    for b in band_summary:
+        md_lines.append(f"| {b['label']} | {float(b['fraction']):.3f} |")
+
+    md_lines.extend(
+        [
+            "",
+            "## Dominant Vibrations (0.5–30 Hz)",
+            "",
+            "| Frequency (Hz) | Relative amplitude | Suspected issue | Recommendation |",
+            "| ---: | ---: | --- | --- |",
+        ]
+    )
 
     for peak in peaks:
         md_lines.append(
@@ -147,7 +201,13 @@ def write_reports(
             }
         )
 
-    if baseline_csv and baseline_peaks is not None and baseline_metrics is not None:
+    if (
+        baseline_csv
+        and baseline_peaks is not None
+        and baseline_metrics is not None
+        and baseline_band_summary is not None
+    ):
+        delta_bands = _delta_spectral_bands(band_summary, baseline_band_summary)
         md_lines.extend(
             [
                 "",
@@ -163,6 +223,22 @@ def write_reports(
                 f"| Accel P95 (vector) | {_delta_metrics(metrics, baseline_metrics)['accel_p95_vector']:.4f} |",
                 f"| Jerk RMS (vector) | {_delta_metrics(metrics, baseline_metrics)['jerk_rms_vector']:.4f} |",
                 f"| Jerk P95 (vector) | {_delta_metrics(metrics, baseline_metrics)['jerk_p95_vector']:.4f} |",
+                "",
+                "### Delta Spectral Bands (fraction, current − baseline)",
+                "",
+                "| Band | Current | Baseline | Δ |",
+                "| --- | ---: | ---: | ---: |",
+            ]
+        )
+
+        for b in delta_bands:
+            md_lines.append(
+                f"| {b['label']} | {float(b['current_fraction']):.3f} |"
+                f" {float(b['baseline_fraction']):.3f} | {float(b['delta_fraction']):+.3f} |"
+            )
+
+        md_lines.extend(
+            [
                 "",
                 "### Peak Delta (bucketed at 0.5 Hz)",
                 "",
@@ -182,6 +258,8 @@ def write_reports(
             "csv": str(baseline_csv),
             "time_metrics": baseline_metrics.to_json(),
             "delta_time_metrics": _delta_metrics(metrics, baseline_metrics),
+            "spectral_bands": baseline_band_summary,
+            "delta_spectral_bands": delta_bands,
             "peak_deltas": [c.to_json() for c in comps],
         }
 

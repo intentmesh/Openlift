@@ -52,7 +52,7 @@ def main(argv: list[str] | None = None) -> None:
     df = load_data(args.csv)
     output_dir = args.output or args.csv.parent
 
-    sample_rate, duration, peaks, metrics = analyze_df(
+    sample_rate, duration, peaks, metrics, band_summary = analyze_df(
         df, max_peaks=args.max_peaks, units=args.units
     )
 
@@ -67,10 +67,11 @@ def main(argv: list[str] | None = None) -> None:
     baseline_csv = None
     baseline_peaks = None
     baseline_metrics = None
+    baseline_band_summary = None
     if args.baseline is not None:
         baseline_csv = args.baseline
         baseline_df = load_data(baseline_csv)
-        _, _, baseline_peaks, baseline_metrics = analyze_df(
+        _, _, baseline_peaks, baseline_metrics, baseline_band_summary = analyze_df(
             baseline_df, max_peaks=args.max_peaks, units=args.units
         )
 
@@ -82,10 +83,12 @@ def main(argv: list[str] | None = None) -> None:
         duration_seconds=duration,
         peaks=peaks,
         metrics=metrics,
+        band_summary=band_summary,
         plot_path=plot_path,
         baseline_csv=baseline_csv,
         baseline_peaks=baseline_peaks,
         baseline_metrics=baseline_metrics,
+        baseline_band_summary=baseline_band_summary,
     )
 
     print(f"Report written to {output_dir.resolve()}")

@@ -119,6 +119,45 @@ def find_peaks(freqs: np.ndarray, amplitude: np.ndarray, max_peaks: int) -> list
     return peaks
 
 
+def band_power_summary(
+    freqs: np.ndarray,
+    amplitude: np.ndarray,
+    *,
+    bands: list[tuple[float, float, str]],
+    min_hz: float = 0.5,
+    max_hz: float = 30.0,
+) -> list[dict[str, float | str]]:
+    """
+    Summarize spectral power by frequency bands.
+
+    Uses power ~ amplitude^2 of the combined-axis FFT magnitude.
+    """
+
+    if freqs.size == 0 or amplitude.size == 0:
+        return [
+            {
+                "label": label,
+                "low_hz": low,
+                "high_hz": high,
+                "power": 0.0,
+                "fraction": 0.0,
+            }
+            for low, high, label in bands
+        ]
+
+    valid = (freqs >= min_hz) & (freqs <= max_hz)
+    power = amplitude * amplitude
+    total = float(np.sum(power[valid])) if np.any(valid) else 0.0
+
+    out: list[dict[str, float | str]] = []
+    for low, high, label in bands:
+        m = (freqs >= low) & (freqs < high) & valid
+        p = float(np.sum(power[m])) if np.any(m) else 0.0
+        frac = (p / total) if total > 0 else 0.0
+        out.append({"label": label, "low_hz": low, "high_hz": high, "power": p, "fraction": frac})
+    return out
+
+
 def write_reports(
     output_dir: Path,
     peaks: list[Peak],
