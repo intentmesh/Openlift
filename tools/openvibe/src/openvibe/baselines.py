@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import math
+import os
+import tempfile
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -45,12 +47,34 @@ class BaselineModel:
 def load_store(path: Path) -> dict[str, object]:
     if not path.exists():
         return {"schema_version": BASELINES_SCHEMA_VERSION, "groups": {}}
-    return json.loads(path.read_text(encoding="utf-8"))
+    store = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(store, dict):
+        raise ValueError("Invalid baselines store: root must be an object")
+    sv = store.get("schema_version")
+    if sv != BASELINES_SCHEMA_VERSION:
+        raise ValueError(f"Unsupported baselines store schema_version: {sv!r}")
+    groups = store.get("groups")
+    if groups is None:
+        store["groups"] = {}
+    elif not isinstance(groups, dict):
+        raise ValueError("Invalid baselines store: groups must be an object")
+    return store
 
 
 def save_store(path: Path, store: dict[str, object]) -> None:
+    """
+    Field-grade: atomic write to prevent corruption on power loss.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(store, indent=2), encoding="utf-8")
+    payload = json.dumps(store, indent=2)
+    with tempfile.NamedTemporaryFile(
+        "w", delete=False, encoding="utf-8", dir=str(path.parent), prefix=path.name, suffix=".tmp"
+    ) as f:
+        tmp = Path(f.name)
+        f.write(payload)
+        f.flush()
+        os.fsync(f.fileno())
+    tmp.replace(path)
 
 
 def add_fingerprint(
@@ -61,8 +85,6 @@ def add_fingerprint(
 ) -> None:
     store = load_store(store_path)
     groups = store.setdefault("groups", {})
-    if not isinstance(groups, dict):
-        raise ValueError("Invalid baselines store: groups must be an object")
 
     gk = group_key(tags)
     group_obj = groups.setdefault(gk, {"samples": [], "model": None})
@@ -91,8 +113,6 @@ def add_fingerprint(
 def build_model(*, store_path: Path, tags: dict[str, str]) -> BaselineModel:
     store = load_store(store_path)
     groups = store.get("groups", {})
-    if not isinstance(groups, dict):
-        raise ValueError("Invalid baselines store: groups must be an object")
 
     gk = group_key(tags)
     group_obj = groups.get(gk)
@@ -130,8 +150,6 @@ def build_model(*, store_path: Path, tags: dict[str, str]) -> BaselineModel:
 def get_or_build_model(*, store_path: Path, tags: dict[str, str]) -> BaselineModel:
     store = load_store(store_path)
     groups = store.get("groups", {})
-    if not isinstance(groups, dict):
-        raise ValueError("Invalid baselines store: groups must be an object")
 
     gk = group_key(tags)
     group_obj = groups.get(gk)
