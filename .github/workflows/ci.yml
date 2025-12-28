@@ -1,0 +1,33 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  openvibe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e "tools/openvibe[dev]"
+
+      - name: Lint (ruff)
+        run: |
+          ruff check tools/openvibe
+
+      - name: Format (ruff)
+        run: |
+          ruff format --check tools/openvibe
+
+      - name: Test (pytest)
+        run: |
+          pytest tools/openvibe
+

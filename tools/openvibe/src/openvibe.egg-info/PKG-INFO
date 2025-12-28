@@ -1,0 +1,62 @@
+Metadata-Version: 2.4
+Name: openvibe
+Version: 0.1.0
+Summary: Elevator ride-quality analyzer (FFT-based vibration diagnostics).
+Author: OpenLift contributors
+License: Apache-2.0
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: numpy>=1.24
+Requires-Dist: pandas>=2.0
+Provides-Extra: plot
+Requires-Dist: matplotlib>=3.8; extra == "plot"
+Provides-Extra: dev
+Requires-Dist: pytest>=8.0; extra == "dev"
+Requires-Dist: ruff>=0.9.0; extra == "dev"
+
+# OpenVibe – Ride Quality Analyzer
+
+OpenVibe is a command-line tool that turns raw accelerometer logs into actionable ride-quality diagnostics aligned with ISO 18738 ride-comfort metrics.
+
+## Features
+- Imports CSV sensor data (timestamp + X/Y/Z acceleration in m/s² or g)
+- Removes DC offset and applies windowed FFT
+- Detects dominant vibration peaks and maps them to common elevator issues
+- Outputs a Markdown + JSON report plus optional PNG spectrum plot
+
+## Quick Start
+
+```bash
+cd tools/openvibe
+python3 -m venv .venv && source .venv/bin/activate
+pip install -e ".[plot]"
+openvibe sample_data.csv --plot
+```
+
+### Legacy (no install)
+
+```bash
+python openvibe.py sample_data.csv --plot
+```
+
+## CSV Format
+
+| Column      | Description                          |
+|-------------|--------------------------------------|
+| `timestamp` | Unix timestamp in seconds (float)    |
+| `ax`        | X-axis acceleration (m/s² or g)      |
+| `ay`        | Y-axis acceleration                  |
+| `az`        | Z-axis acceleration                  |
+
+Use any mobile logging app (e.g., PhyPhox, SensorLog) and export to CSV.
+
+## Output
+- `report.md` – human-readable summary with peak table and remediation hints
+- `report.json` – machine-readable metrics
+- `spectrum.png` (optional) – FFT magnitude plot
+
+## Next Steps
+- Live mobile app (Flutter) streaming directly from device sensors
+- ISO 18738 ride quality scoring (RMS jerk, comfort index)
+- Automated PDF export for modernization proposals
+
