@@ -1,0 +1,14 @@
+DRIVE FAULT RESET
+-----------------
+When the VVVF drive reports a fault, the controller will inhibit motion until the
+fault is acknowledged. To reset:
+1. Ensure the car is stationary and doors are closed.
+2. Press and hold the DRIVE RESET pushbutton for > 1 second.
+3. Observe that the DRIVE READY lamp illuminates before requesting new calls.
+
+DOOR OVERRIDE
+-------------
+If the hall doors fail to close within 10 seconds, the controller energizes the DOOR
+OVERRIDE relay and reopens the doors. Technicians may bypass the override by
+selecting SERVICE MODE and flipping the DOOR HOLD toggle on the COP.
+

@@ -1,0 +1,7 @@
+pdfminer.six>=20231228
+scikit-learn>=1.5
+numpy>=1.24
+uvicorn>=0.40
+fastapi>=0.128
+pytest>=7.4
+
