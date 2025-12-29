@@ -92,7 +92,7 @@ OpenLift breaks the OEM walled gardens by separating a safety-critical kernel fr
 ---
 
 ## 📂 Repository Structure
-- `core-controller/` – split-kernel controller logic (C++/Rust).
+- `core-controller/` – split-kernel controller logic (C++/Rust) plus the `zephyr-demo` reference safety/application split.
 - `simulator/` – Python digital twin + traffic/kinematics models.
 - `dashboard/` – React/TS cloud dashboards and technician tooling.
 - `tools/openvibe/` – ride-quality analyzer that turns accelerometer CSV logs into diagnostics.
