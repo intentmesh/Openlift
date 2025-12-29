@@ -9,7 +9,10 @@ setup:
 	$(VENV)/bin/pip install -r requirements.txt
 
 run: setup
-	$(VENV)/bin/python openvibe.py sample_data.csv --plot --stdout-report
+	$(VENV)/bin/python -m openvibe.core sample_data.csv --plot --stdout-report
+
+serve: setup
+	$(VENV)/bin/uvicorn service:app --reload
 
 fmt:
 	$(VENV)/bin/python -m black openvibe.py

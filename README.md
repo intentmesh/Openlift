@@ -99,7 +99,7 @@ OpenLift breaks the OEM walled gardens by separating a safety-critical kernel fr
 - `docs/` – Architecture, compliance strategy, and detailed roadmap.
 
 ## 🧰 Featured Tool: OpenVibe
-OpenVibe is the Phase-1 flagship utility. It ingests phone accelerometer logs, applies ISO 18738 metrics (RMS acceleration, jerk, comfort class), classifies dominant vibration peaks via configurable frequency bands, and emits Markdown/JSON reports. Run it locally via `make run` or inside Docker, and extend the issue knowledge base by editing `tools/openvibe/issues.json`.
+OpenVibe is the Phase-1 flagship utility. It ingests phone accelerometer logs, applies ISO 18738 metrics (RMS acceleration, jerk, comfort class), classifies dominant vibration peaks via configurable frequency bands, and emits Markdown/JSON reports. Run it locally via `make run`, spin up the REST API via `make serve`, or experiment with the Flutter scaffold in `tools/openvibe/mobile`. Extend the issue knowledge base by editing `tools/openvibe/issues.json`.
 
 ---
 

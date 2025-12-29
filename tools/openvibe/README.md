@@ -14,7 +14,7 @@ OpenVibe is a command-line tool that turns raw accelerometer logs into actionabl
 cd tools/openvibe
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-python openvibe.py sample_data.csv --plot
+python -m openvibe.core sample_data.csv --plot
 ```
 
 ### Make/Docker workflows
@@ -25,6 +25,9 @@ make setup
 
 # run analyzer with plotting + JSON stdout
 make run
+
+# launch FastAPI service for mobile clients
+make serve
 
 # or use Docker
 docker build -t openvibe .
@@ -53,6 +56,8 @@ Use any mobile logging app (e.g., PhyPhox, SensorLog) and export to CSV.
 - `--highpass/--lowpass`: adjust filtering
 - `--issues-config`: point to custom JSON frequency bands
 - `--stdout-report`: emit JSON to stdout for pipelines
+- `--segment-*`: configure ride segmentation
+- `--cloud-dir`: mirror JSON payloads to a directory (cloud export stub)
 - `--plot`: save `spectrum.png`
 
 ## Output
@@ -86,6 +91,21 @@ cd tools/openvibe
 make setup
 .venv/bin/pytest
 ```
+
+## REST Service
+Run the API for remote/mobile ingestion:
+
+```bash
+cd tools/openvibe
+make serve  # serves http://127.0.0.1:8000
+```
+
+Endpoints:
+- `GET /health`
+- `POST /analyze` (multipart CSV upload) → returns JSON payload identical to CLI output.
+
+## Flutter Companion
+A Flutter skeleton lives in [`mobile/openvibe_mobile`](mobile/openvibe_mobile). It streams accelerometer data, shows instantaneous RMS, and hits the REST endpoint for full analysis. This will evolve into the production mobile app.
 
 ## Next Steps
 - Live mobile app (Flutter) streaming directly from device sensors

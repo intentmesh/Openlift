@@ -5,20 +5,26 @@ import numpy as np
 import pandas as pd
 import pytest
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
+PACKAGE_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = PACKAGE_ROOT.parent
+for candidate in (PACKAGE_ROOT, REPO_ROOT):
+    path_str = str(candidate)
+    if path_str not in sys.path:
+        sys.path.insert(0, path_str)
 
 from openvibe import (  # noqa: E402
+    AnalyzerOptions,
     IsoMetrics,
+    analyze_dataframe,
     convert_units,
     detect_peaks,
     load_issue_db,
     compute_iso_metrics,
     validate_recording,
 )
+from openvibe.core import segment_dataframe
 
-FIXTURE_DIR = PROJECT_ROOT
+FIXTURE_DIR = PACKAGE_ROOT
 
 
 def make_df(value: float = 1.0, length: int = 100, sample_rate: float = 50.0) -> pd.DataFrame:
@@ -60,4 +66,29 @@ def test_detect_peaks_classifies_frequency(tmp_path: Path):
     assert peaks
     assert pytest.approx(peaks[0].frequency, abs=0.1) == 10.0
     assert "Guide" in peaks[0].issue
+
+
+def test_segment_dataframe_detects_motion():
+    sample_rate = 50.0
+    length = 400
+    timestamps = np.arange(length) / sample_rate
+    variation = 0.5 * np.sin(2 * np.pi * 0.5 * timestamps)
+    data = {
+        "timestamp": timestamps,
+        "ax": np.zeros(length),
+        "ay": np.zeros(length),
+        "az": 9.81 + variation,
+    }
+    df = pd.DataFrame(data)
+    segments = segment_dataframe(df, sample_rate=50.0, threshold=0.05, min_duration=0.5)
+    assert segments
+    assert segments[0]["duration"] >= 0.5
+
+
+def test_analyze_dataframe_payload(tmp_path: Path):
+    df = make_df(value=0.2, length=400)
+    options = AnalyzerOptions()
+    issues = load_issue_db(FIXTURE_DIR / "issues.json")
+    payload = analyze_dataframe(df, options, issues, tmp_path, persist_reports=False)
+    assert "peaks" in payload and "segments" in payload
 
