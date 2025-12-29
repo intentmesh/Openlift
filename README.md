@@ -96,6 +96,7 @@ OpenLift breaks the OEM walled gardens by separating a safety-critical kernel fr
 - `simulator/` – Python digital twin + traffic/kinematics models.
 - `dashboard/` – React/TS cloud dashboards and technician tooling.
 - `tools/openvibe/` – ride-quality analyzer that turns accelerometer CSV logs into diagnostics.
+- `tools/bridge-monitor/` – ESP32-S3 CAN/IO telemetry bridge firmware + host collector.
 - `tools/specscanner/` – document ingestion & Q/A service for PDF/TXT manuals.
 - `docs/` – Architecture, compliance strategy, and detailed roadmap.
 
